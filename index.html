@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Scan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            color: #000; 
+        }
+        
+        #entry-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+            background-color: #000;
+        }
+        
+        #enter-text {
+            color: #00ff00;
+            font-size: 2em;
+            text-shadow: 0 0 5px #00ff00;
+            animation: blink 1.5s infinite;
+            text-align: center;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        #main-content {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #background-gif {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            opacity: 0.7;
+        }
+        
+        #info-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            white-space: pre;
+            line-height: 1.4;
+            color: #000; 
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            font-size: 32px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            text-align: center;
+        }
+        
+        .info-line {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInZoom 0.5s forwards; 
+            text-align: center; 
+            font-size: 32px; 
+        }
+        
+        @keyframes fadeInZoom {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.8); 
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1); 
+            }
+        }
+        
+        
+        #info-display::-webkit-scrollbar {
+            display: none;
+        }
+        #info-display {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body>
+   
+    <div id="entry-screen">
+        <div id="enter-text" style="text-align: center;">Click To Enter</div>
+    </div>
+
+    
+    
+
+    <div id="main-content">
+        <img id="background-gif" src="men.gif" alt="Background">
+        <div id="info-display"></div>
+    </div>
+    
+    
+    <audio id="background-music" loop>
+        <source src="men.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        
+        document.getElementById('entry-screen').addEventListener('click', function() {
+            
+            this.style.display = 'none';
+            
+            
+            document.getElementById('main-content').style.display = 'block';
+            
+            
+            const music = document.getElementById('background-music');
+            music.volume = 0.5;
+            music.play().catch(e => console.log("Auto-play prevented:", e));
+            
+            
+            displaySystemInfo();
+        });
+        
+        async function displaySystemInfo() {
+            const display = document.getElementById('info-display');
+
+            try {
+               
+                const ipData = await fetch('https://ipapi.co/json/').then(res => res.json());
+                const now = new Date();
+
+                
+                let gpuInfo = 'Unknown';
+                try {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        if (debugInfo) {
+                            gpuInfo = `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} (${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)})`;
+                        }
+                    }
+                } catch (e) {
+                    console.error("GPU detection error:", e);
+                }
+
+                
+                const infoLines = [
+                    `IP ADDRESS: ${ipData.ip || 'UNKNOWN'}`,
+                    `COUNTRY: ${ipData.country_name || 'UNKNOWN'}`,
+                    `REGION: ${ipData.region || 'UNKNOWN'}`,
+                    `CITY: ${ipData.city || 'UNKNOWN'}`,
+                    `ZIP CODE: ${ipData.postal || 'UNKNOWN'}`,
+                    `FULL LOCATION: ${ipData.city ? `${ipData.city}, ${ipData.region}, ${ipData.country_name}` : 'UNKNOWN'}`,
+                    `LATITUDE: ${ipData.latitude || 'UNKNOWN'}`,
+                    `LONGITUDE: ${ipData.longitude || 'UNKNOWN'}`,
+                    `TIMEZONE: ${ipData.timezone || 'UNKNOWN'}`,
+                    `CURRENT TIME: ${now.toLocaleDateString('en-GB')}, ${now.toLocaleTimeString('en-GB')}`,
+                    `ISP: ${ipData.org || 'UNKNOWN'}`,
+                    `ORGANIZATION: ${ipData.org || 'UNKNOWN'}`,
+                    `AUTONOMOUS SYSTEM: ${ipData.asn || 'UNKNOWN'}`,
+                    `REFERENCE: NONE`,
+                    `SYSTEM LANGUAGES: ${navigator.languages.join(', ') || 'UNKNOWN'}`,
+                    `SCREEN WIDTH: ${screen.width || 'UNKNOWN'}`,
+                    `SCREEN HEIGHT: ${screen.height || 'UNKNOWN'}`,
+                    `WINDOW WIDTH: ${window.innerWidth || 'UNKNOWN'}`,
+                    `WINDOW HEIGHT: ${window.innerHeight || 'UNKNOWN'}`,
+                    `DISPLAY PIXEL DEPTH: ${screen.pixelDepth || 'UNKNOWN'}`,
+                    `SCREEN ORIENTATION: ${screen.orientation ? screen.orientation.type : 'LANDSCAPE'}`,
+                    `SCREEN ROTATION: 0`,
+                    `CPU THREADS: ${navigator.hardwareConcurrency || 'UNKNOWN'}`,
+                    `AVAILABLE BROWSER MEMORY: ${(performance.memory ? (performance.memory.totalJSHeapSize / 1024 / 1024).toFixed(0) : 'UNKNOWN')}`,
+                    `GPU VENDOR: ${gpuInfo}`
+                ];
+
+                
+                display.innerHTML = '';
+
+                let currentFontSize = 48; 
+
+               
+                infoLines.forEach((line, index) => {
+                    setTimeout(() => {
+                        const lineElement = document.createElement('div');
+                        lineElement.className = 'info-line';
+                        lineElement.textContent = line;
+                        lineElement.style.animationDelay = `${index * 100}ms`;
+                        display.appendChild(lineElement);
+
+                       
+                        currentFontSize = Math.max(16, currentFontSize - 1); 
+                        Array.from(display.children).forEach(child => {
+                            child.style.fontSize = `${currentFontSize}px`;
+                        });
+
+                        
+                        display.scrollTop = display.scrollHeight;
+                    }, index * 100);
+                });
+
+            } catch (error) {
+                const errorElement = document.createElement('div');
+                errorElement.className = 'info-line';
+                errorElement.textContent = 'ERROR LOADING SYSTEM INFORMATION';
+                display.appendChild(errorElement);
+                console.error("Error:", error);
+            }
+        }
+    </script>
+</body>
+</html>
